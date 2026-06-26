@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     openai_api_key: str = Field(..., alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4.1-mini", alias="OPENAI_MODEL")
+    openai_base_url: str = Field(default="https://polza.ai/api/v1", alias="OPENAI_BASE_URL")
 
     bot_token: str = Field(..., alias="BOT_TOKEN")
     manager_chat_id: int = Field(..., alias="MANAGER_CHAT_ID")

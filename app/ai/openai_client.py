@@ -11,7 +11,10 @@ class OpenAILeadClient:
     """OpenAI Responses API client for appointment lead qualification."""
 
     def __init__(self, settings: Settings) -> None:
-        self._client = AsyncOpenAI(api_key=settings.openai_api_key)
+        self._client = AsyncOpenAI(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url,
+        )
         self._model = settings.openai_model
         self._system_prompt = build_system_prompt(settings)
 
