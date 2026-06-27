@@ -54,75 +54,96 @@ async def menu_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if not query or not query.data:
         return
-    await query.answer()
 
     data = query.data
-    settings = get_settings()
+    logger.info("Callback received: {} from user {}", data, query.from_user.id if query.from_user else "?")
 
-    if data == "menu:main":
-        await _show_main(query)
+    try:
+        settings = get_settings()
 
-    elif data == "menu:services":
-        text = (
-            "Выбери услугу, чтобы узнать подробности и цены 💅\n\n"
-            "Каждая процедура выполняется Анной лично, "
-            "с вниманием к деталям и комфорту."
-        )
-        await query.edit_message_text(text, reply_markup=services_menu())
+        if data == "menu:main":
+            await query.answer()
+            await _show_main(query)
 
-    elif data == "menu:address":
-        text = (
-            f"📍 {settings.studio_address}\n\n"
-            f"🚗 {settings.route_description}\n\n"
-            f"🕐 {settings.work_hours}"
-        )
-        await query.edit_message_text(text, reply_markup=back_to_main())
+        elif data == "menu:services":
+            await query.answer()
+            text = (
+                "Выбери услугу, чтобы узнать подробности и цены 💅\n\n"
+                "Каждая процедура выполняется Анной лично, "
+                "с вниманием к деталям и комфорту."
+            )
+            await query.edit_message_text(text, reply_markup=services_menu())
 
-    elif data == "menu:schedule":
-        text = (
-            "Чтобы узнать свободное время, напиши:\n\n"
-            "   « Хочу маникюр в субботу »\n\n"
-            "Я покажу доступные слоты и помогу записаться ✨"
-        )
-        await query.edit_message_text(text, reply_markup=back_to_main())
+        elif data == "menu:address":
+            await query.answer()
+            text = (
+                f"📍 {settings.studio_address}\n\n"
+                f"🚗 {settings.route_description}\n\n"
+                f"🕐 {settings.work_hours}"
+            )
+            await query.edit_message_text(text, reply_markup=back_to_main())
 
-    elif data == "menu:book":
-        text = (
-            "Давай запишемся! ✨\n\n"
-            "Напиши, какая услуга интересует и на какой день удобно.\n"
-            "Например: «Покрытие гель-лак, среда после обеда»"
-        )
-        await query.edit_message_text(text, reply_markup=back_to_main())
+        elif data == "menu:schedule":
+            await query.answer()
+            text = (
+                "Чтобы узнать свободное время, напиши:\n\n"
+                "   « Хочу маникюр в субботу »\n\n"
+                "Я покажу доступные слоты и помогу записаться ✨"
+            )
+            await query.edit_message_text(text, reply_markup=back_to_main())
 
-    elif data.startswith("service:"):
-        service = data.split(":", 1)[1]
-        text = _service_description(service)
-        await query.edit_message_text(text, reply_markup=service_detail(service))
+        elif data == "menu:book":
+            await query.answer()
+            text = (
+                "Давай запишемся! ✨\n\n"
+                "Напиши, какая услуга интересует и на какой день удобно.\n"
+                "Например: «Покрытие гель-лак, среда после обеда»"
+            )
+            await query.edit_message_text(text, reply_markup=back_to_main())
 
-    elif data.startswith("book_service:"):
-        service = data.split(":", 1)[1]
-        text = (
-            f"Отличный выбор! 💖\n\n"
-            f"Услуга: {service}\n\n"
-            "Напиши удобную дату и время, например:\n"
-            "   « Суббота, 10:00 »\n"
-            "   « 5 июля после обеда »"
-        )
-        await query.edit_message_text(text, reply_markup=back_to_main())
+        elif data.startswith("service:"):
+            await query.answer()
+            service = data.split(":", 1)[1]
+            text = _service_description(service)
+            await query.edit_message_text(text, reply_markup=service_detail(service))
 
-    elif data == "booking:confirm":
-        await query.edit_message_text(
-            "Заявка отправлена! 🎉\n\n"
-            "Анна свяжется с тобой для подтверждения записи.\n"
-            "Спасибо, что выбрала нас! 💖",
-            reply_markup=back_to_main(),
-        )
+        elif data.startswith("book_service:"):
+            await query.answer()
+            service = data.split(":", 1)[1]
+            text = (
+                f"Отличный выбор! 💖\n\n"
+                f"Услуга: {service}\n\n"
+                "Напиши удобную дату и время, например:\n"
+                "   « Суббота, 10:00 »\n"
+                "   « 5 июля после обеда »"
+            )
+            await query.edit_message_text(text, reply_markup=back_to_main())
 
-    elif data == "booking:retry":
-        await query.edit_message_text(
-            "Без проблем! Напиши заново удобное время, и я всё исправлю ✨",
-            reply_markup=back_to_main(),
-        )
+        elif data == "booking:confirm":
+            await query.answer()
+            await query.edit_message_text(
+                "Заявка отправлена! 🎉\n\n"
+                "Анна свяжется с тобой для подтверждения записи.\n"
+                "Спасибо, что выбрала нас! 💖",
+                reply_markup=back_to_main(),
+            )
+
+        elif data == "booking:retry":
+            await query.answer()
+            await query.edit_message_text(
+                "Без проблем! Напиши заново удобное время, и я всё исправлю ✨",
+                reply_markup=back_to_main(),
+            )
+
+        else:
+            await query.answer()
+
+    except Exception as exc:
+        logger.exception("Error handling callback {}: {}", data, exc)
+        try:
+            await query.answer("Произошла ошибка, попробуйте ещё раз", show_alert=True)
+        except Exception:
+            pass
 
 
 async def _show_main(query: CallbackQuery) -> None:
