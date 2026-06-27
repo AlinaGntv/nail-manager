@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from datetime import time
 from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, Request, status
@@ -6,6 +7,8 @@ from telegram import Update
 
 from app.config import Settings, get_settings
 from app.database.db import close_database, init_database
+from app.database.repository import ScheduleRepository
+from app.schemas.schedule import ScheduleCreate
 from app.telegram.bot import build_application
 from app.utils.logger import configure_logging, logger
 
@@ -14,11 +17,25 @@ settings: Settings = get_settings()
 telegram_application = build_application(settings)
 
 
+async def _init_default_schedule() -> None:
+    """Seed base schedule пн-сб 10:00-20:00 if empty."""
+    repo = ScheduleRepository()
+    existing = await repo.get_all_schedule()
+    if existing:
+        return
+    for day in range(6):  # 0=Mon .. 5=Sat
+        await repo.set_schedule(
+            ScheduleCreate(day_of_week=day, start_time=time(10, 0), end_time=time(20, 0))
+        )
+    logger.info("Default schedule initialized: Mon-Sat 10:00-20:00")
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Initialize resources required by the webhook app."""
     configure_logging(settings.log_level)
     await init_database(settings.database_url)
+    await _init_default_schedule()
     await telegram_application.initialize()
     await telegram_application.start()
     logger.info("Application started")
@@ -56,17 +73,6 @@ async def telegram_webhook(request: Request) -> dict[str, bool]:
         )
 
     payload = await request.json()
-
-    # Debug: log update type
-    update_type = "unknown"
-    if "callback_query" in payload:
-        cq = payload["callback_query"]
-        update_type = f"callback_query data={cq.get('data')} user={cq.get('from', {}).get('id')}"
-    elif "message" in payload:
-        msg = payload["message"]
-        text = msg.get("text", "")
-        update_type = f"message text={text} user={msg.get('from', {}).get('id')}"
-    logger.info("WEBHOOK RECEIVED: {}", update_type)
 
     try:
         update = Update.de_json(payload, telegram_application.bot)

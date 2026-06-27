@@ -56,7 +56,6 @@ async def menu_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     data = query.data
-    logger.info("Callback received: {} from user {}", data, query.from_user.id if query.from_user else "?")
 
     try:
         settings = get_settings()
