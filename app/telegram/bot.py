@@ -1,3 +1,4 @@
+from telegram import Update
 from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler
 
 from app.ai.openai_client import OpenAILeadClient
@@ -13,6 +14,7 @@ from app.telegram.handlers import (
     build_start_handler,
     menu_callback,
 )
+from app.utils.logger import logger
 
 
 def build_application(settings: Settings) -> Application:
@@ -42,13 +44,24 @@ def build_application(settings: Settings) -> Application:
 
     # Client handlers
     application.add_handler(build_start_handler())
-    application.add_handler(
-        CallbackQueryHandler(menu_callback, pattern=r"^menu:|^service:|^book_service:|^booking:")
-    )
     application.add_handler(build_message_handler(lead_service))
 
     # Master schedule handlers (commands + inline callbacks)
     for handler in build_schedule_handlers(schedule_service):
         application.add_handler(handler)
+
+    # Menu callbacks — registered LAST so it doesn't block other handlers
+    application.add_handler(
+        CallbackQueryHandler(menu_callback, pattern=r"^menu:|^service:|^book_service:|^booking:")
+    )
+
+    # Catch-all for unhandled callbacks (debug)
+    async def _debug_callback(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+        query = update.callback_query
+        if query:
+            logger.info("UNHANDLED callback: data={} user={}", query.data, query.from_user.id if query.from_user else "?")
+            await query.answer()
+
+    application.add_handler(CallbackQueryHandler(_debug_callback))
 
     return application
