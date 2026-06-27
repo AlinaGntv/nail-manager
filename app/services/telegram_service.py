@@ -12,14 +12,18 @@ class TelegramService:
 
     async def notify_manager(self, lead: Lead) -> None:
         """Notify the nail master about a new appointment lead."""
-        username = f"@{lead.username}" if lead.username else "-"
+        username = f"@{lead.username}" if lead.username else "нет username"
+
         text = (
-            "Новая запись на маникюр\n\n"
-            f"Имя: {lead.full_name or '-'}\n"
-            f"Телефон: {lead.phone or '-'}\n"
-            f"Услуга: {lead.service or '-'}\n"
-            f"Желаемое время: {lead.desired_datetime or '-'}\n"
-            f"Username: {username}\n"
-            f"Telegram ID: {lead.telegram_id}"
+            "Новая запись! 💖\n"
+            "━━━━━━━━━━━━━━━━━\n\n"
+            f"  Клиент: {lead.full_name or '—'}\n"
+            f"  Телефон: {lead.phone or '—'}\n"
+            f"  Услуга: {lead.service or '—'}\n"
+            f"  Время: {lead.desired_datetime or '—'}\n\n"
+            f"  Username: {username}\n"
+            f"  Telegram ID: {lead.telegram_id}\n"
+            "━━━━━━━━━━━━━━━━━\n\n"
+            "Свяжитесь с клиентом для подтверждения."
         )
         await self._bot.send_message(chat_id=self._manager_chat_id, text=text)

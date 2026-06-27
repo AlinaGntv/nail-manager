@@ -25,6 +25,7 @@ class OpenAILeadClient:
         known_phone: str | None = None,
         known_service: str | None = None,
         known_datetime: str | None = None,
+        available_slots: str | None = None,
     ) -> AIResponse:
         """Return validated AI appointment response, retrying invalid JSON once."""
         prompt = build_user_prompt(
@@ -33,6 +34,7 @@ class OpenAILeadClient:
             known_phone=known_phone,
             known_service=known_service,
             known_datetime=known_datetime,
+            available_slots=available_slots,
         )
 
         last_error: Exception | None = None
