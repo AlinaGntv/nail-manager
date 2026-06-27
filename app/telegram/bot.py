@@ -38,6 +38,7 @@ def build_application(settings: Settings) -> Application:
     )
 
     application.bot_data["schedule_service"] = schedule_service
+    application.bot_data["lead_service"] = lead_service
 
     application.add_handler(build_start_handler())
     application.add_handler(

@@ -30,10 +30,14 @@ from app.utils.logger import logger
 # ======================================================================
 
 
-async def start(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
-    """Приветствие + главное меню."""
+async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Приветствие + главное меню + сброс старых заявок."""
     if not update.effective_message or not update.effective_user:
         return
+
+    lead_service: LeadService | None = ctx.bot_data.get("lead_service")
+    if lead_service:
+        await lead_service.reset_lead(update.effective_user.id)
 
     name = update.effective_user.first_name or ""
     greeting = (

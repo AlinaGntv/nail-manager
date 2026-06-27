@@ -74,6 +74,12 @@ class LeadService:
             )
         )
 
+    async def reset_lead(self, telegram_id: int) -> None:
+        """Mark any existing collecting leads as stale."""
+        lead = await self._lead_repository.get_active_by_telegram_id(telegram_id)
+        if lead:
+            await self._lead_repository.update(lead, LeadUpdate(status="stale"))
+
     async def _get_available_slots(self, service: str | None, message: str) -> str | None:
         """Try to extract a date from the message and return available slots."""
         parsed_date = self._extract_date(message)
@@ -164,13 +170,11 @@ class LeadService:
             await self._sheets_service.append_lead(lead)
         except Exception as exc:
             logger.exception("Failed to append lead id={} to Google Sheets: {}", lead.id, exc)
-            raise
 
         try:
             await self._telegram_service.notify_manager(lead)
         except Exception as exc:
             logger.exception("Failed to notify manager about lead id={}: {}", lead.id, exc)
-            raise
 
     def _parse_lead_date(self, datetime_str: str) -> date | None:
         """Try to parse a date from the lead's desired_datetime string."""
