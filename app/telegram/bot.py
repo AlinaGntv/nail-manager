@@ -1,5 +1,5 @@
 from telegram import Update
-from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler
+from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, ContextTypes
 
 from app.ai.openai_client import OpenAILeadClient
 from app.config import Settings
